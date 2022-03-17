@@ -7,50 +7,59 @@ modelFunc=function(
     additive='Control',
     basal.diet='Mixed',
     params=parset,
-    resultsFilepath=NULL,
     dataFolder=NULL,
     spinUpTime.hours=0,
     useNetworkFuncs=FALSE,
     useFeedData=FALSE,
-    useGasData=FALSE
+    useGasData=FALSE,
+    paramList
 ){
 
-    parNames=names(parset)
 
-    #REQUIRES: (these are sourced later in this file)
-    #bioChemFuncs.R
-    #parameters.R
-    #FuncsForMicroPop.R
+    myPars=paramList
 
-    new.filename=paste(resultsFilepath,'run',ID,'.Rdata',sep='')
-    print('filename for saving')
-    print(new.filename)
 
-    polymer.frac.gPkg<<-getPolymerFrac(basal.diet,additive,dataFolder)
+    myPars[['f.X']] = c('NSC'=paramList$fch.x,'Protein'=paramList$fpro.x)
     
-    print(polymer.frac.gPkg)
+    #convert to rumen temperature
+    KH.co2  =  paramList$KH.co2.s*exp(-(19410/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
+    KH.ch4  =  paramList$KH.ch4.s*exp(-(14240/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
+    KH.h2   =  paramList$KH.h2.s*exp(-(4180/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
+    
+
+    myPars[['KH']]=c('H2.gas'=KH.h2,'CO2.gas'=KH.co2,'CH4.gas'=KH.ch4)
+    
+# Acid-base constants mol/L
+    myPars[['K.w']]  =  exp(paramList$deltaH0.Ka.w/(paramList$R*100)*(1/298.15-1/paramList$T.rumen))*1e-14
+    myPars[['K.a.co2']]  =  10^(-6.35)*exp(paramList$deltaH0.Ka.co2/(paramList$R*100)*(1/298.15-1/paramList$T.rumen))
+    myPars[['K.a.nh4']]  =   10^(-9.25)*exp(paramList$deltaH0.Ka.nh4/(paramList$R*100)*(1/298.15-1/paramList$T.rumen))
+    myPars[['K.a.ac']]  =  10^(-4.76)
+    myPars[['K.a.bu']] = 10^(-4.82)
+    myPars[['K.a.pr']] = 10^(-4.88)
+    myPars[['K.a.vfa']] = 10^(-4.76)#K.a.ac
+    
+
+
+
+    myPars[['polymer.frac.gPkg']]=getPolymerFrac(basal.diet,additive,dataFolder)
+    
+    #print(polymer.frac.gPkg)
+
     timeIntHours=1/60 #1 minute
 
-    polymer.names<<-c('NDF','NSC','Protein')
-    vfa.names<<-c('Acetate','Butyrate','Propionate')
-    gas.names<<-c('H2'='H2.gas','SIC'='CO2.gas','CH4'='CH4.gas')
-    
 
-    resNames<<-getAllResources(microbeNames)  
-
-    khyd<<-khyd.orig
-    vfa.absorption<<-vfa.absorption.orig
-
+  #  resNames = getAllResources(microbeNames,FALSE,myPars=myPars)  
 
     #add in variables that aren't resources
     DF1= get(microbeNames[1])
-    DF<<-cbind(DF1,'NDF'=c('X',rep(NA,6)),'NSC'=c('X',rep(NA,6)),'Protein'=c('X',rep(NA,6)))
-    if ('H2'%in%resNames){
-        DF<<-cbind(DF,'H2.gas'=c('X',rep(NA,6)))}
-    if ('SIC'%in%resNames){
-        DF<<-cbind(DF,'CO2.gas'=c('X',rep(NA,6)))}
-    if ('CH4'%in%resNames){
-         DF<<-cbind(DF,'CH4.gas'=c('X',rep(NA,6)))}
+    DF=cbind(DF1,'NDF'=c('X',rep(NA,6)),'NSC'=c('X',rep(NA,6)),'Protein'=c('X',rep(NA,6)))
+   # if ('H2'%in%resNames){
+        DF=cbind(DF,'H2.gas'=c('X',rep(NA,6)))
+#}
+   # if ('SIC'%in%resNames){
+        DF=cbind(DF,'CO2.gas'=c('X',rep(NA,6)))#}
+ #   if ('CH4'%in%resNames){
+         DF=cbind(DF,'CH4.gas'=c('X',rep(NA,6)))#}
     assign(microbeNames[1],DF,envir = .GlobalEnv)
     
 
@@ -71,7 +80,7 @@ modelFunc=function(
 
 
     #CHANGE TO SHORTER TIME?
-    times=TSmat[1:200,1]
+    times=TSmat[1:500,1]
     
 
 
@@ -83,6 +92,9 @@ modelFunc=function(
     }
 
 
+
+
+    
    print('starting microPopModel()')
     
     out=microPopModel(
@@ -98,8 +110,10 @@ modelFunc=function(
         #odeOptions=list('atol'=1e-8,'rtol'=1e-8,'method'='lsoda'),
         #numStrains=numStrains,
         #strainOptions=strainOptions,
-        networkAnalysis=useNetworkFuncs
-        )
+        networkAnalysis=useNetworkFuncs,
+        myPars=myPars
+
+    )
 
     print('after')
 

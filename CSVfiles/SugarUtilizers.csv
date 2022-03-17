@@ -1,0 +1,8 @@
+,units,Sugar,Acetate,Butyrate,Propionate,H2,NH3,SIC,Biomass,H2O
+Rtype,none,Se,P,P,P,P,Se,P,Pb,Sw
+halfSat,g/l,1.62,NA,NA,NA,NA,0.0036,NA,NA,NA
+yield,g/g,0.01,NA,NA,NA,NA,NA,NA,NA,NA
+maxGrowthRate,/h,1.25,NA,NA,NA,NA,NA,NA,NA,NA
+stoichiom,moles,1,0.913,0.2426,0.3351,1.976,0.16,1.398,0.16,0.097
+keyResource,none,Sugar,,,,,,,,
+pHcorners,none,0,0,10,10,,,,,

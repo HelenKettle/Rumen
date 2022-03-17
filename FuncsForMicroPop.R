@@ -1,31 +1,49 @@
 removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
   #removal rate from rumen
 
+#print('removal rate')
+#print(varName)
+
   mw=parms$molarMass
   allSubConc=stateVarValues[parms$resourceNames]
 
     hydrolysis=0;     death=0;     gasTransfer=0;  absorption=0
-    
-  if (varName%in%polymer.names){hydrolysis=khyd[varName]}#hydrolysis of polymers
+
+  if (varName%in%parms$myPars$polymer.names){
+      hydrolysis=parms$myPars$khyd[varName]
+  }#hydrolysis of polymers
 
   gname=getGroupName(varName,microbeNames)
-  if (gname%in%microbeNames){death=kd}#death of microbes
+  if (gname%in%microbeNames){death=parms$myPars$kd}#death of microbes
   
   if (varName%in%c('SIC','H2','CH4')){#dissolved gases transfer to gas phase
     if (varName=='SIC'){
-      soluble.conc=Sco2FromSIC(allSubConc,mw,vfa.names,Z0)[1]
+      soluble.conc=Sco2FromSIC(allSubConc,mw,
+          parms$myPars$vfa.names,parms$myPars$Z0,parms$myPars)[1]
     }else{
       soluble.conc=varValue
     }
-    
-    
-    pp=partialPressure(gas.names[varName],gas.names,allSubConc,mw,Ptot) #bar
-    gasTransfer=mw[varName]*gasTransferRateFunc(soluble.conc/mw[varName],pp,KH[gas.names[varName]],kLa) #g/L/h
 
+    #print(parms$myPars)
+    
+    pp=partialPressure(parms$myPars$gas.names[varName],
+        parms$myPars$gas.names,allSubConc,mw,parms$myPars$Ptot) #bar
+
+    #print('pp')
+    #print(pp)
+
+#    print('parms$myPars$KH')
+ #       print(parms$myPars$KH)
+    
+    gasTransfer=mw[varName]*gasTransferRateFunc(soluble.conc/mw[varName],
+        pp,parms$myPars$KH[parms$myPars$gas.names[varName]],parms$myPars$kLa) #g/L/h
+
+  #  print('gasTransfer')
+   # print(gasTransfer)
   }
     
-    if (varName%in%vfa.names){
-        absorption=vfa.absorption[varName]
+    if (varName%in%parms$myPars$vfa.names){
+        absorption=parms$myPars$vfa.absorption[varName]
     }
     
   v=(washOut[varName] + hydrolysis + death + absorption)*varValue + gasTransfer 
@@ -39,24 +57,30 @@ removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
 
 entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
 
+    #print('varName')
+    #print(varName)
+ #   print(names(stateVarValues))
+
 
   #resource (or microbial strain mass) per unit time
-  mw=parms$molarMass
+    mw=parms$molarMass
   #allMicrobeConc=stateVarValues[parms$microbeNames]
-  allMicrobeConc=stateVarValues[parms$allStrainNames]
+    allMicrobeConc=stateVarValues[parms$allStrainNames]
     #print(names(parms))
     #print('allMicrobeConc')
 
   #entry rate from outside the system----------------------------------------------
-  gname=getGroupName(varName,parms$microbeNames)
+    gname=getGroupName(varName,parms$microbeNames)
 
-  if (gname%in%parms$microbeNames){
-      v.in=inflowRate[gname]/parms$numStrains
+    if (gname%in%parms$microbeNames){
+        v.in=inflowRate[gname]/parms$numStrains
 
-  }else{
-      if (varName%in%polymer.names){
-          if (useFeedData){
-              v.in=polymer.frac.gPkg[varName]*approx(TSmat[,'Time'],TSmat[,'DMIR'],time,rule=2,ties=mean)$y/Vol.l #g/l/h
+    }else{
+        
+        if (varName%in%parms$myPars$polymer.names){
+            if (useFeedData){
+                v.in=parms$myPars$polymer.frac.gPkg[varName]*
+                    approx(TSmat[,'Time'],TSmat[,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
 
           }else{
               v.in=inflowRate[varName]
@@ -70,6 +94,8 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
       }
   }
 
+#    print('v.in')
+#        print(v.in)
 
    #entry rate from inside the system-----------------------------------------------
   hydrolysis=0
@@ -77,25 +103,30 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
   gasTransfer=0
 
   if (varName=='Sugar'){#entry rate of sugar from hydrolysed polymers
-      hydrolysis=sum(khyd[c('NDF','NSC')]*stateVarValues[c('NDF','NSC')])#g/L/h
+      hydrolysis=sum(parms$myPars$khyd[c('NDF','NSC')]*stateVarValues[c('NDF','NSC')])#g/L/h
 
   }
 
     if (varName=='AminoAcid'){#entry rate of amino acids from hydrolysed proteins
-        hydrolysis=khyd['Protein']*stateVarValues['Protein']#g/L/h
+        hydrolysis=parms$myPars$khyd['Protein']*stateVarValues['Protein']#g/L/h
 
     }
     
     if (varName=='NSC' | varName=='Protein'){#dead microbial cells become Znsc and Zpro
-        input.from.dead.cells=f.X[varName]*kd*sum(allMicrobeConc) #g/L/h
+        input.from.dead.cells=parms$myPars$f.X[varName]*parms$myPars$kd*sum(allMicrobeConc) #g/L/h
 #        print(input.from.dead.cells)
     }
 
-    if (varName%in%gas.names){#gas transferred from dissolved gases
-      soluble.name=names(gas.names[gas.names==varName])
-      if (soluble.name=='SIC'){
+
+
+    if (varName%in%parms$myPars$gas.names){#gas transferred from dissolved gases
+
+        soluble.name=names(parms$myPars$gas.names[parms$myPars$gas.names==varName])
+
+ 
+        if (soluble.name=='SIC'){
           
-        v=Sco2FromSIC(stateVarValues,mw,vfa.names,Z0)
+        v=Sco2FromSIC(stateVarValues,mw,parms$myPars$vfa.names,parms$myPars$Z0,parms$myPars)
         soluble.conc=v[1] #g/L
 
         if (length(ode.times)<20){
@@ -111,16 +142,20 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
             }
             
         }
-        
+
+
       }else{
         soluble.conc=stateVarValues[soluble.name] #g/L
       }
       
-      pp=partialPressure(varName,gas.names,stateVarValues,mw,Ptot) #bar
 
-      gasTransfer=Vol.l*gasTransferRateFunc(soluble.conc/mw[soluble.name],pp,KH[varName],kLa) #mol/h
+        pp=partialPressure(varName,parms$myPars$gas.names,stateVarValues,mw,parms$myPars$Ptot) #bar
 
-      
+      gasTransfer=parms$myPars$Vol.l*gasTransferRateFunc(soluble.conc/mw[soluble.name],pp,parms$myPars$KH[varName],parms$myPars$kLa) #mol/h
+
+
+#      print('pp')
+#       print(pp)
       
       if (length(ode.times)<20){
  
@@ -142,8 +177,16 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
     
   v=v.in+hydrolysis+input.from.dead.cells+gasTransfer
 
-   #print('entry rate')
-   #print(v)
+ #   print('v.in')
+ #   print(v.in)
+ #   print('hydrolysis')
+ #   print(hydrolysis)
+ #   print('input.from.dead.cells')
+ #   print(input.from.dead.cells)
+ #   print('gasTransfer')
+ #   print(gasTransfer)
+ #  print('entry rate')
+ #  print(v)
 
     return(v)
 }

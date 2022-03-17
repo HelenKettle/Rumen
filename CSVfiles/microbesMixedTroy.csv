@@ -1,0 +1,4 @@
+,Units,Methanogen.Acetate,MethanogensH2,Mixed_methanogen,Acetogens_AD,Sugar_utilizer,Amino_acid_utilizer,Anammox,SulphateReducers,SugarUsers,AAUsers,H2UsersRaf
+startValue,g/l,0.1,0.8,1,1,1,1,1,1,30,15,0.109284
+inflowRate,g/l/h,0,0,0,0,0,0,0,0,0,0,0
+washOut,/h,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01

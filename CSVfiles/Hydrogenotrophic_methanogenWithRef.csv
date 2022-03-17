@@ -1,0 +1,9 @@
+,units,H2,SIC,CH4,H2O,REF,
+Rtype,none,Se,Se,P,P,,
+halfSat,g/l,1.17E-05,3.2E-07,NA,NA,MunozTamayo2016,(H2)
+yield,g/g,0.165,NA,NA,NA,KettleEtAl2015,
+maxGrowthRate,/h,1.45,NA,NA,NA,Rosen&Jeppsson2006,
+stoichiom,mol,4,1,1,2,,
+keyResource,none,H2,NA,NA,NA,,
+,,,,,,,
+Note,have,changed,CO2,to,SIC,,

@@ -1,0 +1,6 @@
+,Units,Propionate,Butyrate,Ethanol,H2,Acetate,H2O,CH4,AminoAcid,Sugar,NH3,NO2,N2,Protein,SO4,H2S,NDF,NSC,H2.gas,CO2.gas,CH4.gas,SIC,CH4.chamber
+startValue,g/l,2.3,1.1,0,0,4,5,0.01123,0,0.12,1,0,0,3,10,0,8,7,0,1,1,6,20
+inflowRate,g/l/h,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0
+washOut,/h,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,2,2,2,0.01,0
+molarMass,g/mol,74.08,88.1,46,2,60.05,18,16,134,180.16,17,46,28,NA,96,34,NA,NA,2,44,16,44.01,16
+blue,values,set,after,running,model,,,,,,,,,,,,,,,,,,

@@ -15,7 +15,7 @@ source('modelFunc.R')
 source('dataFuncs.R')
 source('loadDataFunc.R')
 source('bioChemFuncs.R')
-source('parameters.R')
+source('parameters.R') #makes paramList
 source('FuncsForMicroPop.R') #this defines the new myRateFuncs functions
 source('quickPlot.R')
 
@@ -24,31 +24,29 @@ useGasData=TRUE
 
 useNetworkFuncs=FALSE
 
-paramsFromFile=TRUE
-
 spinUpTime.hours=10
 
 dataFolder='Data/'
 
-CSVfiles='../CSVfiles'
-
-#load('../mechModelOATfit1.Rdata')
+CSVfiles='CSVfiles'
 
 id='601199'
-
 additive='Control'
 diet='Mixed'
-
-print(id)
-
-resultsFilepath=paste('../../Results/MechModel/singleCows/',sep='')
-
 
 parset=c(
     'yield.Sug'=0.318,
     'washOut'=0.12,
-    'khyd'=8,
+    'khyd.scale'=8,
     'Ks.H2'=1.2e-5)
+
+parNames=names(parset)
+
+#for (p in parNames){
+#    if (p%in%names(paramList)){
+#        paramList[p]=parset[[p]]
+#    }
+#}
 
 #input DFs----------------
 #Create microbe data frames
@@ -61,7 +59,33 @@ microbeNames = c('SugarUsers','AAUsers','MethanogensH2')
 sys.res = createDF(paste0(CSVfiles,'/ResourceSysInfoTroy.csv'))
 sys.bac = createDF(paste0(CSVfiles,'/microbesMixedTroy.csv'))
 
-source('makeInputDFs.R')
+#--update data frames with new parameter values------------------
+
+#Note stoichiom is affected by yield for sug users and AA users
+if ('yield.Sug'%in%parNames){
+    source('calc.stoichiom.yields.R')
+    SugarUsers['yield','Sugar']=as.numeric(parset['yield.Sug'])
+    new.stoichioms=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$stoi
+    SugarUsers['Rtype','H2O']=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$waterStatus
+    p.names=c('Sugar','Acetate','Butyrate','Propionate','H2','NH3','SIC','H2O','Biomass')
+    for (pn in p.names){
+        SugarUsers['stoichiom',pn]=as.numeric(new.stoichioms[pn])
+    }
+}
+if ('washOut'%in%parNames){
+    sys.res['washOut',]=as.numeric(parset['washOut'])
+}
+if ('washOut'%in%parNames){
+    sys.bac['washOut',]=as.numeric(parset['washOut'])
+}
+if ('khyd'%in%parNames){
+    khyd=as.numeric(parset['khyd.scale'])*khyd.orig
+}
+if ('Ks.H2'%in%parNames){
+    MethanogensH2['halfSat','H2']=as.numeric(parset['Ks.H2'])
+}
+#-------------------------------------------------------------------
+
 
 #RATE FUNCS
 myRateFuncs=rateFuncsDefault
@@ -78,12 +102,13 @@ out=modelFunc(
     additive=additive,
     basal.diet=diet,
     params=parset,
-    resultsFilepath=resultsFilepath,
     dataFolder=dataFolder,
     spinUpTime.hours=spinUpTime.hours,
     useNetworkFuncs=useNetworkFuncs,
     useFeedData=useFeedData,
-    useGasData=useGasData
+    useGasData=useGasData,
+    paramList
+    
 )
 
 quickPlot(out)

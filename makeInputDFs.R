@@ -62,17 +62,7 @@
         }
     
 
-                                        #Note stoichiom is affected by yield for sug users and AA users
-        if ('yield.Sug'%in%parNames){
-            source('calc.stoichiom.yields.R')
-            SugarUsers['yield','Sugar']=as.numeric(parset['yield.Sug'])
-            new.stoichioms=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$stoi
-            SugarUsers['Rtype','H2O']=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$waterStatus
-            p.names=c('Sugar','Acetate','Butyrate','Propionate','H2','NH3','SIC','H2O','Biomass')
-            for (pn in p.names){
-                SugarUsers['stoichiom',pn]=as.numeric(new.stoichioms[pn])
-            }
-        }
+
 
         if ('yield.AA'%in%parNames){
             source('calc.stoichiom.yields.R')

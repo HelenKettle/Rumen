@@ -1,10 +1,9 @@
 loadDataFunc=function(ID,dataFolder,spinUpTime.hours,useFeedData,useGasData){
-                                        #get input data file ('feedRate')
- #   load(paste(dataFolder,'RespirationChamber/Processed/Feed/feedRate',ID,'.RData',sep=''))
- 
-#get output data file (Gas data eg. MPR or HPR or CO2, in 'animalGasData')
-  #  load(paste(dataFolder,'RespirationChamber/Processed/Gas/gas',ID,'.RData',sep=''))
 
+#returns a matrix: TSmat with 'Time'(hours),'DMIR' (dry matter intake rate in kg/d),'MPRmPh' (methane production rate in moles per hour))
+
+    
+#get input data file ('feedRate')
     if (useFeedData){
         load(paste(dataFolder,'feedRate',ID,'.RData',sep=''))
         JD.feed=feedRate[,'JD']*24 #change to hours
@@ -34,11 +33,15 @@ loadDataFunc=function(ID,dataFolder,spinUpTime.hours,useFeedData,useGasData){
         TSmat1=cbind('Time'=req.times,'DMIR'=feedTS,'MPRmPh'=60*MPRgPm/molar.mass.CH4) #mol/h
     #add in some spin up time
 
-        HoursBefore=seq(0,48-one.min,one.min)+req.times[1]-spinUpTime.hours
-        DMIRbefore=rep(mean(TSmat1[,2]),length(HoursBefore))
-        MPRbefore=rep(mean(TSmat1[,3]),length(HoursBefore))
-        TSmat=rbind(cbind('Time'=HoursBefore,'DMIR'=DMIRbefore,'MPRmPh'=MPRbefore),TSmat1)
+        req.times.start=req.times[1]
+        spin.up.start=req.times.start-spinUpTime.hours
+        spin.up.fin=spin.up.start+spinUpTime.hours
+        spin.up.vec=seq(spin.up.start,spin.up.fin,by=one.min)
+        DMIRbefore=rep(mean(TSmat1[,2]),length(spin.up.vec))
+        MPRbefore=rep(mean(TSmat1[,3]),length(spin.up.vec))
+        TSmat=rbind(cbind('Time'=spin.up.vec,'DMIR'=DMIRbefore,'MPRmPh'=MPRbefore),TSmat1)
     }
         
     return(TSmat)
+
 }

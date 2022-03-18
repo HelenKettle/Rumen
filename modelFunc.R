@@ -15,6 +15,7 @@ modelFunc=function(
     paramList
 ){
 
+   # returns list containing 'solution' (matrix from ODE solver), parms (microPop parameters),myPars (rumen parameters)))
 
     myPars=paramList
 
@@ -37,18 +38,10 @@ modelFunc=function(
     myPars[['K.a.bu']] = 10^(-4.82)
     myPars[['K.a.pr']] = 10^(-4.88)
     myPars[['K.a.vfa']] = 10^(-4.76)#K.a.ac
-    
-
-
 
     myPars[['polymer.frac.gPkg']]=getPolymerFrac(basal.diet,additive,dataFolder)
     
-    #print(polymer.frac.gPkg)
-
     timeIntHours=1/60 #1 minute
-
-
-  #  resNames = getAllResources(microbeNames,FALSE,myPars=myPars)  
 
     #add in variables that aren't resources
     DF1= get(microbeNames[1])
@@ -76,23 +69,20 @@ modelFunc=function(
 
 
     #load gas and feed data
-    TSmat<<-loadDataFunc(ID,dataFolder,spinUpTime.hours,useFeedData,useGasData)
+    myPars[['TSmat']]=loadDataFunc(ID,dataFolder,spinUpTime.hours,useFeedData,useGasData)
 
 
     #CHANGE TO SHORTER TIME?
-    times=TSmat[1:500,1]
+    times=myPars[['TSmat']][1:1000,1]
     
 
 
     if (useGasData){
     #set initial value of CH4.gas based on mean of data
-        sys.res['startValue','CH4.gas']<<-mean(TSmat[,'MPRmPh'])/sys.res['washOut','CH4.gas']
+        sys.res['startValue','CH4.gas'] = mean(myPars[['TSmat']][,'MPRmPh'])/sys.res['washOut','CH4.gas']
     }else{
         sys.res['startValue','CH4.gas']=4.5
     }
-
-
-
 
     
    print('starting microPopModel()')
@@ -120,7 +110,7 @@ modelFunc=function(
 
     #save(out,ID,pH,Sco2.keep,ode.times,TSmat,sys.res,sys.bac,parset,file=new.filename)
 
-    return(out)
+    return(list(solution=out$solution,parms=out$parms,myPars=myPars))
 
     
 }

@@ -18,13 +18,14 @@ source('bioChemFuncs.R')
 source('parameters.R') #makes paramList
 source('FuncsForMicroPop.R') #this defines the new myRateFuncs functions
 source('quickPlot.R')
+source('plotCompareGas.R')
 
 useFeedData=TRUE
 useGasData=TRUE
 
 useNetworkFuncs=FALSE
 
-spinUpTime.hours=10
+spinUpTime.hours=1
 
 dataFolder='Data/'
 
@@ -41,6 +42,7 @@ parset=c(
     'Ks.H2'=1.2e-5)
 
 parNames=names(parset)
+
 
 #for (p in parNames){
 #    if (p%in%names(paramList)){
@@ -78,8 +80,8 @@ if ('washOut'%in%parNames){
 if ('washOut'%in%parNames){
     sys.bac['washOut',]=as.numeric(parset['washOut'])
 }
-if ('khyd'%in%parNames){
-    khyd=as.numeric(parset['khyd.scale'])*khyd.orig
+if ('khyd.scale'%in%parNames){
+    paramList[['khyd']]=as.numeric(parset['khyd.scale'])*paramList[['khyd.vec']]
 }
 if ('Ks.H2'%in%parNames){
     MethanogensH2['halfSat','H2']=as.numeric(parset['Ks.H2'])
@@ -112,6 +114,8 @@ out=modelFunc(
 )
 
 quickPlot(out)
+
+plotCompareGas(out,spinUpTime.hours)
 
 microbeNames=out$parms$microbeNames
 resourceNames=out$parms$resourceNames

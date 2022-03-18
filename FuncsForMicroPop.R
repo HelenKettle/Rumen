@@ -80,7 +80,7 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
         if (varName%in%parms$myPars$polymer.names){
             if (useFeedData){
                 v.in=parms$myPars$polymer.frac.gPkg[varName]*
-                    approx(TSmat[,'Time'],TSmat[,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
+                    approx(parms$myPars[['TSmat']][,'Time'],parms$myPars[['TSmat']][,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
 
           }else{
               v.in=inflowRate[varName]

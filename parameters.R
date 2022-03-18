@@ -6,7 +6,7 @@ paramList=list(
 
 
                                         #hydrolysis of polymers
-    khyd =  c('NDF'=0.05,'NSC'=0.20,'Protein'=0.22), #/h #proper orig I think
+    khyd.vec =  c('NDF'=0.05,'NSC'=0.20,'Protein'=0.22), #/h #proper orig I think
 #khyd.orig  =  c('NDF'=1.0,'NSC'=1.0,'Protein'=1.0) #/h #NOTE after GSA have changed khyd.NSC to 0.1
 
 #Liquid-gas transfer coef (/h)

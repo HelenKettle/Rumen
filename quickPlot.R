@@ -15,14 +15,13 @@ quickPlot=function(out){
 
     dev.new()
     par(mfrow=c(2,2))
-    yl=c('microbes','polymers','VFA','Gases')
+    yl=c('microbes','polymers','VFA','Gases (g)')
     pl=list(microbeNames,polymerNames,vfaNames,gasNames)
     for (n in 1:length(pl)){
         matplot(model.time,out$solution[,pl[[n]]],type='l',
                 xlab='time (h)',ylab=yl[n],
                 lwd=2,cex.lab=1.2,cex.axis=1.2)
-        legend('right',legend=pl[[n]],col=1:3,lty=1:3,lwd=2,bty='n')
+        legend('topright',legend=pl[[n]],col=1:3,lty=1:3,lwd=2,bty='n',cex=0.8)
     }
 
-#    plot(model.time,MPR,type='l',ylab='MPR (g/d)',xlab='time (h)')
 }

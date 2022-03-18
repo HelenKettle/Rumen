@@ -17,8 +17,12 @@ modelFunc=function(
 
    # returns list containing 'solution' (matrix from ODE solver), parms (microPop parameters),myPars (rumen parameters)))
 
+
     myPars=paramList
 
+    myPars[['polymer.names']]=c('NDF','NSC','Protein')
+    myPars[['vfa.names']]=c('Acetate','Butyrate','Propionate')
+    myPars[['gas.names']]=c('H2'='H2.gas','SIC'='CO2.gas','CH4'='CH4.gas')
 
     myPars[['f.X']] = c('NSC'=paramList$fch.x,'Protein'=paramList$fpro.x)
     
@@ -43,16 +47,12 @@ modelFunc=function(
     
     timeIntHours=1/60 #1 minute
 
-    #add in variables that aren't resources
+    #add in variables that aren't microbial resources
     DF1= get(microbeNames[1])
     DF=cbind(DF1,'NDF'=c('X',rep(NA,6)),'NSC'=c('X',rep(NA,6)),'Protein'=c('X',rep(NA,6)))
-   # if ('H2'%in%resNames){
-        DF=cbind(DF,'H2.gas'=c('X',rep(NA,6)))
-#}
-   # if ('SIC'%in%resNames){
-        DF=cbind(DF,'CO2.gas'=c('X',rep(NA,6)))#}
- #   if ('CH4'%in%resNames){
-         DF=cbind(DF,'CH4.gas'=c('X',rep(NA,6)))#}
+    DF=cbind(DF,'H2.gas'=c('X',rep(NA,6)))
+    DF=cbind(DF,'CO2.gas'=c('X',rep(NA,6)))#}
+    DF=cbind(DF,'CH4.gas'=c('X',rep(NA,6)))#}
     assign(microbeNames[1],DF,envir = .GlobalEnv)
     
 
@@ -73,7 +73,7 @@ modelFunc=function(
 
 
     #CHANGE TO SHORTER TIME?
-    times=myPars[['TSmat']][1:1000,1]
+    times=myPars[['TSmat']][1:10,1]
     
 
 
@@ -94,9 +94,9 @@ modelFunc=function(
         microbeSysInfo=sys.bac,
         pHLimit=FALSE,
         rateFuncs=myRateFuncs,
-        odeFunc=derivsDefault,
+        #odeFunc=derivsDefault,
         checkingOptions=list(balanceTol=1e-2,reBalanceStoichiom=FALSE,checkMassConv=FALSE,checkStoichiomBalance=TRUE,stoiTol=1),
-        plotOptions=list(yLabel='quantity',xLabel='time (h)',plotFig=TRUE),
+        plotOptions=list(plotFig=FALSE),
         #odeOptions=list('atol'=1e-8,'rtol'=1e-8,'method'='lsoda'),
         #numStrains=numStrains,
         #strainOptions=strainOptions,
@@ -107,10 +107,19 @@ modelFunc=function(
 
     print('after')
 
+    print(names(out))
 
+    if (useNetworkFuncs){
+        return.list=list(solution=out$solution,
+            flow.uptake=out$flow.uptake,flow.production=out$flow.production,
+            parms=out$parms,myPars=myPars)
+    }else{
+        return.list=list(solution=out$solution,parms=out$parms,myPars=myPars)
+    }
+        
     #save(out,ID,pH,Sco2.keep,ode.times,TSmat,sys.res,sys.bac,parset,file=new.filename)
 
-    return(list(solution=out$solution,parms=out$parms,myPars=myPars))
+    return(return.list)
 
     
 }

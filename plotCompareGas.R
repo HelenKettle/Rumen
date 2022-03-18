@@ -1,4 +1,4 @@
-plotCompareGas=function(out,spinUpTime.hours){
+plotCompareGas=function(out,spinUpTime.hours,useGasData=TRUE){
 
     #TSmat with 'Time'(hours),'DMIR' (dry matter intake rate in kg/d),'MPRmPh' (methane production rate in moles per hour))
 
@@ -8,13 +8,21 @@ plotCompareGas=function(out,spinUpTime.hours){
     methane=out$solution[,'CH4.gas']
     MPR=methane*out$parms$Smats$washOut['CH4.gas']
 
-    gasMat=out$myPars[['TSmat']]
-    gasTime=gasMat[,'Time']-min(gasMat[,'Time'])
+    if (useGasData){
+        gasMat=out$myPars[['TSmat']]
+        gasTime=gasMat[,'Time']-min(gasMat[,'Time'])
+        mpr=c(MPR,gasMat[,'MPRmPh'])
+    }else{
+        mpr=MPR
+    }
+
     
     dev.new()
-    plot(range(model.time),range(c(MPR,gasMat[,'MPRmPh'])),type='n',xlab='Time (h)',ylab='MPR (moles/h)')
+    plot(range(model.time),range(mpr),type='n',xlab='Time (h)',ylab='MPR (moles/h)')
     lines(model.time,MPR,col='black')
-    lines(gasTime,gasMat[,'MPRmPh'],col='red')
+    if (useGasData){
+        lines(gasTime,gasMat[,'MPRmPh'],col='red')
+    }
     abline(v=spinUpTime.hours,lty=2,col='blue')
 
     legend('topleft',c('model','data','spin up time'),col=c('black','red','blue'),lty=c(1,1,2),bty='n')

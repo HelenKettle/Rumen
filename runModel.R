@@ -23,7 +23,7 @@ source('plotCompareGas.R')
 useFeedData=TRUE
 useGasData=TRUE
 
-useNetworkFuncs=FALSE
+useNetworkFuncs=TRUE
 
 spinUpTime.hours=1
 
@@ -43,12 +43,6 @@ parset=c(
 
 parNames=names(parset)
 
-
-#for (p in parNames){
-#    if (p%in%names(paramList)){
-#        paramList[p]=parset[[p]]
-#    }
-#}
 
 #input DFs----------------
 #Create microbe data frames
@@ -110,19 +104,18 @@ out=modelFunc(
     useFeedData=useFeedData,
     useGasData=useGasData,
     paramList
-    
 )
 
 quickPlot(out)
 
 plotCompareGas(out,spinUpTime.hours)
 
-microbeNames=out$parms$microbeNames
-resourceNames=out$parms$resourceNames
 time=out$solution[,1]
-Bac=out$solution[,microbeNames]
-methane=out$solution[,'CH4.gas']
-MPR=methane*out$parms$Smats$washOut['CH4.gas']
+microbeNames=out$parms$microbeNames
+#resourceNames=out$parms$resourceNames
+#Bac=out$solution[,microbeNames]
+#methane=out$solution[,'CH4.gas']
+#MPR=methane*out$parms$Smats$washOut['CH4.gas']
  
 if (useNetworkFuncs){
 
@@ -136,7 +129,7 @@ if (useNetworkFuncs){
     vv=getVNPlotObject(DFs$nodes,DFs$edges,
         scaleNodes= TRUE,scaleEdges = TRUE,
         mainTitle=paste('Network after',round((max(time)-min(time)-spinUpTime.hours)/24,1),'d'), 
-           figWidth = 500,figHeight = 500)
+           figWidth = 600,figHeight = 600)
     
     print(vv)
     

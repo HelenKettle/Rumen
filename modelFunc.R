@@ -1,22 +1,22 @@
 modelFunc=function(
+    times.h,
     microbeNames,
     resourceSysInfo,
     microbeSysInfo,
     rateFuncs=rateFuncsDefault,
-    ID='001',
     additive='Control',
     basal.diet='Mixed',
-    params=parset,
     dataFolder=NULL,
     spinUpTime.hours=0,
     useNetworkFuncs=FALSE,
-    useFeedData=FALSE,
-    useGasData=FALSE,
+    feedMat=NULL,
+    gasMat=NULL,
+    init.with.CH4.data=FALSE,
+    dietCompositionMat=NULL,
     paramList
 ){
 
    # returns list containing 'solution' (matrix from ODE solver), parms (microPop parameters),myPars (rumen parameters)))
-
 
     myPars=paramList
 
@@ -30,7 +30,6 @@ modelFunc=function(
     KH.co2  =  paramList$KH.co2.s*exp(-(19410/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
     KH.ch4  =  paramList$KH.ch4.s*exp(-(14240/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
     KH.h2   =  paramList$KH.h2.s*exp(-(4180/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
-    
 
     myPars[['KH']]=c('H2.gas'=KH.h2,'CO2.gas'=KH.co2,'CH4.gas'=KH.ch4)
     
@@ -43,9 +42,15 @@ modelFunc=function(
     myPars[['K.a.pr']] = 10^(-4.88)
     myPars[['K.a.vfa']] = 10^(-4.76)#K.a.ac
 
-    myPars[['polymer.frac.gPkg']]=getPolymerFrac(basal.diet,additive,dataFolder)
     
-    timeIntHours=1/60 #1 minute
+    if (!is.null(dietCompositionMat)){
+        myPars[['polymer.frac.gPkg']]=getPolymerFrac(basal.diet,additive,dietCompositionMat)
+    }else{
+        stop('please provide dietCompositionMat for calculating polymer ratios')
+    }
+        
+    
+#    timeIntHours=10/60 #1 minute
 
     #add in variables that aren't microbial resources
     DF1= get(microbeNames[1])
@@ -56,32 +61,27 @@ modelFunc=function(
     assign(microbeNames[1],DF,envir = .GlobalEnv)
     
 
-        #print(DF)
 
-#global variables (want to output from ODE rate functions)
-    pH<<-NA
-    ode.times<<-NA
-    Sco2.keep<<-NA
-    gasTransfer.CO2<<-NA #g/l/h
-    gasTransfer.CH4<<-NA
-    gasTransfer.H2<<-NA
-
-
-
-    #load gas and feed data
-    myPars[['TSmat']]=loadDataFunc(ID,dataFolder,spinUpTime.hours,useFeedData,useGasData)
-
-
-    #CHANGE TO SHORTER TIME?
-    times=myPars[['TSmat']][1:10,1]
-    
-
-
-    if (useGasData){
-    #set initial value of CH4.gas based on mean of data
-        sys.res['startValue','CH4.gas'] = mean(myPars[['TSmat']][,'MPRmPh'])/sys.res['washOut','CH4.gas']
+    #interpolate feed data to times.h and add spin up time
+    if (!is.null(feedMat)){
+        print('here')
+        myPars$useFeedData=TRUE
+        tstep=mean(diff(feedMat[,1]))
+        spin.up.start=times.h[1]-spinUpTime.hours
+        new.times.h=seq(spin.up.start,max(times.h),by=tstep)
+        DMIR.new=approx(feedMat[,1],feedMat[,2],new.times.h,rule=2)$y
+        TSmat=cbind('Time'=new.times.h-min(new.times.h),'DMIR'=DMIR.new)
+        myPars[['TSmat']]=TSmat
     }else{
-        sys.res['startValue','CH4.gas']=4.5
+        myPars$useFeedData=TRUE
+    }
+
+
+    if (init.with.CH4.data & !is.null(gasMat)){
+    #set initial value of CH4.gas based on mean of data
+        sys.res['startValue','CH4.gas'] = mean(gasMat[,'CH4(mol/h)'])/sys.res['washOut','CH4.gas']
+    }else{
+        sys.res['startValue','CH4.gas']= 0
     }
 
     
@@ -89,7 +89,7 @@ modelFunc=function(
     
     out=microPopModel(
         microbeNames=microbeNames,
-        times=times,
+        times=times.h,
         resourceSysInfo=sys.res,
         microbeSysInfo=sys.bac,
         pHLimit=FALSE,
@@ -117,7 +117,6 @@ modelFunc=function(
         return.list=list(solution=out$solution,parms=out$parms,myPars=myPars)
     }
         
-    #save(out,ID,pH,Sco2.keep,ode.times,TSmat,sys.res,sys.bac,parset,file=new.filename)
 
     return(return.list)
 

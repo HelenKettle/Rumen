@@ -2,7 +2,7 @@ solverh=function(Z,Svfa,SIC,SIN,myPars){
     #Function for determination of H+ (mol) i.e. ionH used when converting SIC to Sco2
     #H+ is also known as proton or hydron
     #(Munoz-Tamayo et al 2016)
-    #global K.a.co2  K.a.nh4  K.a.vfa K.w
+    #requires: K.a.co2  K.a.nh4  K.a.vfa K.w
     #SIC in moles (soluble inorganic carbon)
     #SIN in moles (soluble inorganic nitrogen)
     #Svfa soluble volatile fatty acids (moles)
@@ -26,6 +26,17 @@ solverh=function(Z,Svfa,SIC,SIN,myPars){
 
 }
 
+
+partialPressure=function(gas.name,all.gas.names,allSubConc,mw,Ptot){
+    tiny=1e-16
+    #returns partial pressure (molar fraction of gases)*Ptot :. same units as Ptot
+    #all.gas.names is a vector of strings eg c('Gh2','Gco2','Gch4')
+    all.g.mol=allSubConc[all.gas.names]
+    gas.pp=Ptot*all.g.mol[gas.name]/(sum(all.g.mol,na.rm=TRUE)+tiny)
+    return(gas.pp)
+}
+
+
 gasTransferRateFunc=function(soluble.conc,gas.pp,K.henry,kLa){
     #returns mass transfer in moles/L/h
     #K.henry in M/bar (=mol/L/bar) at rumen temp
@@ -33,14 +44,6 @@ gasTransferRateFunc=function(soluble.conc,gas.pp,K.henry,kLa){
     #gas.pp is in bar
     #kLa is gas transfer coef (/h)
     return(kLa*(soluble.conc-K.henry*gas.pp))
-}
-
-partialPressure=function(gas.name,all.gas.names,allSubConc,mw,Ptot){
-    tiny=2.2e-16
-    #returns partial pressure (molar fraction of gases)*Ptot :. same units as Ptot
-    #all.gas.names is a vector of strings eg c('Gh2','Gco2','Gch4')
-    all.g.mol=allSubConc[all.gas.names]
-    return(Ptot*all.g.mol[gas.name]/(sum(all.g.mol,na.rm=TRUE)+tiny))
 }
 
 Sco2FromSIC=function(allSubConc,mw,vfa.names,Z0,myPars){

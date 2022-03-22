@@ -15,32 +15,32 @@ removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
 
   gname=getGroupName(varName,microbeNames)
   if (gname%in%microbeNames){death=parms$myPars$kd}#death of microbes
+
+
+  #compute gas transfer from liquid to headspace for SIC, H2 and CH4
+  #for SIC compute soluble concentration using Sco2FromSIC()
+  #Compute partial pressure in headspace (gas.pp in bar)
+  #Compute transfer across interface using gasTransferRateFunc (g/L/h)
   
   if (varName%in%c('SIC','H2','CH4')){#dissolved gases transfer to gas phase
-    if (varName=='SIC'){
-      soluble.conc=Sco2FromSIC(allSubConc,mw,
-          parms$myPars$vfa.names,parms$myPars$Z0,parms$myPars)[1]
-    }else{
-      soluble.conc=varValue
-    }
+      
+      if (varName=='SIC'){
+          soluble.conc=Sco2FromSIC(allSubConc,mw,
+              parms$myPars$vfa.names,parms$myPars$Z0,parms$myPars)[1]
+      }else{
+          soluble.conc=varValue
+      }
 
-    #print(parms$myPars)
+      gas.name=parms$myPars$gas.names[varName]
+      
+      gas.pp=partialPressure(gas.name,parms$myPars$gas.names,
+          allSubConc,mw,parms$myPars$Ptot) #bar
     
-    pp=partialPressure(parms$myPars$gas.names[varName],
-        parms$myPars$gas.names,allSubConc,mw,parms$myPars$Ptot) #bar
+      gasTransfer=mw[varName]*gasTransferRateFunc(soluble.conc/mw[varName],
+          gas.pp,parms$myPars$KH[gas.name],parms$myPars$kLa) #g/L/h
 
-    #print('pp')
-    #print(pp)
-
-#    print('parms$myPars$KH')
- #       print(parms$myPars$KH)
-    
-    gasTransfer=mw[varName]*gasTransferRateFunc(soluble.conc/mw[varName],
-        pp,parms$myPars$KH[parms$myPars$gas.names[varName]],parms$myPars$kLa) #g/L/h
-
-  #  print('gasTransfer')
-   # print(gasTransfer)
   }
+  
     
     if (varName%in%parms$myPars$vfa.names){
         absorption=parms$myPars$vfa.absorption[varName]
@@ -72,7 +72,7 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
     }else{
         
         if (varName%in%parms$myPars$polymer.names){
-            if (useFeedData){
+            if (parms$myPars$useFeedData){
                 v.in=parms$myPars$polymer.frac.gPkg[varName]*
                     approx(parms$myPars[['TSmat']][,'Time'],parms$myPars[['TSmat']][,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
 
@@ -115,21 +115,6 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
             v=Sco2FromSIC(stateVarValues,mw,parms$myPars$vfa.names,parms$myPars$Z0,parms$myPars)
             soluble.conc=v[1] #g/L
 
-            if (length(ode.times)<20){
-                pH <<-c(pH,v[2])
-                ode.times<<-c(ode.times,time)
-                Sco2.keep<<-c(Sco2.keep,soluble.conc)
-            }else{
-                time.diff=time-max(ode.times,na.rm=TRUE)
-                if (time.diff>(10/60)){ #only save every 10 mins
-                    pH <<-c(pH,v[2])
-                    ode.times<<-c(ode.times,time)
-                    Sco2.keep<<-c(Sco2.keep,soluble.conc)
-                }
-                
-            }
-
-
         }else{
             soluble.conc=stateVarValues[soluble.name] #g/L
         }
@@ -140,23 +125,9 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
         gasTransfer=parms$myPars$Vol.l*gasTransferRateFunc(soluble.conc/mw[soluble.name],pp,parms$myPars$KH[varName],parms$myPars$kLa) #mol/h
 
       
-        if (length(ode.times)<20){ #save first 20 timesteps 
- 
-            if (varName=='H2.gas'){gasTransfer.H2<<-c(gasTransfer.H2,gasTransfer)}
-            if (varName=='CO2.gas'){gasTransfer.CO2<<-c(gasTransfer.CO2,gasTransfer)}
-            if (varName=='CH4.gas'){gasTransfer.CH4<<-c(gasTransfer.CH4,gasTransfer)}
 
-        }else{
-          
-            time.diff=time-max(ode.times,na.rm=TRUE)
-          
-            if (time.diff>(10/60)){ #only save every 10 mins
-                if (varName=='H2.gas'){gasTransfer.H2<<-c(gasTransfer.H2,gasTransfer)}
-                if (varName=='CO2.gas'){gasTransfer.CO2<<-c(gasTransfer.CO2,gasTransfer)}
-                if (varName=='CH4.gas'){gasTransfer.CH4<<-c(gasTransfer.CH4,gasTransfer)}
-            }
-        }
     }
+
     
     v=v.in+hydrolysis+input.from.dead.cells+gasTransfer
     

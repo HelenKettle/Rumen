@@ -1,23 +1,21 @@
 #TIME IS IN HOURS THROUGHOUT
 
 rm(list=ls())
-#graphics.off()
+graphics.off()
 
 library(microPop)
 library(devtools)
 
 load_all('microPopRumen')
 
-#source('parameters.R')
-
 timeStep=1/60 #one minute
-times.h=seq(0,48,by=timeStep)
+times.h=seq(0,24,by=timeStep)
 
 useNetworkFuncs=FALSE
 
 init.with.CH4.data=FALSE
 
-spinUpTime.hours=1
+spinUpTime.hours=2
 
 additive='Control'
 diet='Mixed'
@@ -34,7 +32,9 @@ parNames=names(parset)
 microbeNames = c('SugarUsers','AAUsers','MethanogensH2')
 
 #--update data frames with new parameter values------------------
+update.DFs=TRUE
 
+if (update.DFs){
 #Note stoichiom is affected by yield for sug users and AA users
 if ('yield.Sug'%in%parNames){
     SugarUsers['yield','Sugar']=as.numeric(parset['yield.Sug'])
@@ -47,17 +47,22 @@ if ('yield.Sug'%in%parNames){
 }
 if ('washOut'%in%parNames){
     sys.res['washOut',]=as.numeric(parset['washOut'])
-}
-if ('washOut'%in%parNames){
     sys.bac['washOut',]=as.numeric(parset['washOut'])
 }
+
 if ('khyd.scale'%in%parNames){
-    paramList[['khyd']]=as.numeric(parset['khyd.scale'])*paramList[['khyd.vec']]
+    paramList[['khyd.scale']]=parset['khyd.scale']
 }
 if ('Ks.H2'%in%parNames){
     MethanogensH2['halfSat','H2']=as.numeric(parset['Ks.H2'])
 }
 #-------------------------------------------------------------------
+
+#change initial conditions-------------------------------------
+#microbes
+sys.bac['startValue',c('SugarUsers','AAUsers','MethanogensH2')]=c(10,5,1)
+}
+
 
 #RATE FUNCS
 myRateFuncs=rateFuncsDefault
@@ -65,7 +70,7 @@ myRateFuncs$entryRateFunc=entryRateFunc
 myRateFuncs$removalRateFunc=removalRateFunc
 
 
-out=modelFunc(
+out=rumenModel(
     times.h=times.h,
     microbeNames=microbeNames,
     resourceSysInfo=sys.res,
@@ -73,13 +78,12 @@ out=modelFunc(
     rateFuncs=myRateFuncs,
     additive=additive,
     basal.diet=diet,
-    dataFolder=dataFolder,
     spinUpTime.hours=spinUpTime.hours,
     useNetworkFuncs=useNetworkFuncs,
     feedMat=feedMat,
     gasMat=gasMat,
     init.with.CH4.data=init.with.CH4.data,
-    dietCompositionMat=dietComposition,
+    dietCompositionMat=dietCompositionMat,
     paramList=paramList
 )
 

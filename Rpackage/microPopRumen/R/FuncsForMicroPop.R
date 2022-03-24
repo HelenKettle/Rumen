@@ -13,7 +13,7 @@ removalRateFuncRumen=function(varName,varValue,stateVarValues,time,washOut,parms
       hydrolysis=parms$myPars$khyd[varName]
   }#hydrolysis of polymers
 
-  gname=getGroupName(varName,parms$microbeNames)
+  gname=microPop::getGroupName(varName,parms$microbeNames)
   if (gname%in%parms$microbeNames){death=parms$myPars$kd}#death of microbes
 
 
@@ -64,7 +64,7 @@ entryRateFuncRumen=function(varName,varValue,stateVarValues,time,inflowRate,parm
     allMicrobeConc=stateVarValues[parms$allStrainNames]
 
   #entry rate from outside the system----------------------------------------------
-    gname=getGroupName(varName,parms$microbeNames)
+    gname=microPop::getGroupName(varName,parms$microbeNames)
 
     if (gname%in%parms$microbeNames){
         v.in=inflowRate[gname]/parms$numStrains

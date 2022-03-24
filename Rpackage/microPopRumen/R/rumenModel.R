@@ -5,7 +5,7 @@
 #' @param times.h vector of model simulation times in hours
 #' @param spinUpTime.hours time period (h) before the model uses the feed data (default is 0)
 #' @param additive treatment or additive e.g. 'Control' (default) or 'Nitrate'
-#' @param basal.date basal diet - e.g. 'Mixed' (default) or 'Concentrate'
+#' @param basal.diet basal diet - e.g. 'Mixed' (default) or 'Concentrate'
 #' @param feedMat matrix with time (h) in column 1 and dry matter intake rate (kg/h) in column 2
 #' @param gasMat matrix with time (h) in column 1 and methane production rate (mol/h) in column two
 #' @param dietCompositionMat matrix describing the composition of different diets (intrinsic data frame)
@@ -18,17 +18,19 @@
 #'
 #' @return returns a list with the numerical solution (solution) plus parameters used by microPop (parms) plus parameters specified for the rumen (myPars). If useNetworkFuncs is TRUE then flow.uptake and flow.production are added to this list
 #'
+#' @importFrom microPop microPopModel
+#' 
 #' @export
 rumenModel=function(
     times.h,
-    spinUpTime.hours=1,
-    additive='Control',
-    basal.diet='Mixed',
-    dietCompositionMat=dietCompositionMat,
-    feedMat=feedMat,
-    gasMat=gasMat,
-    resourceSysInfo=sys.res,
-    microbeSysInfo=sys.bac,
+    spinUpTime.hours,
+    additive,
+    basal.diet,
+    dietCompositionMat,
+    feedMat,
+    gasMat,
+    resourceSysInfo,
+    microbeSysInfo,
     microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
     useNetworkFuncs=FALSE,
     init.with.CH4.data=FALSE,
@@ -120,12 +122,13 @@ rumenModel=function(
 
 
     #add in variables that aren't microbial resources
-    DF1= get(microbeNames[1])
-    DF=cbind(DF1,'NDF'=c('X',rep(NA,6)),'NSC'=c('X',rep(NA,6)),'Protein'=c('X',rep(NA,6)))
-    DF=cbind(DF,'H2.gas'=c('X',rep(NA,6)))
-    DF=cbind(DF,'CO2.gas'=c('X',rep(NA,6)))#}
-    DF=cbind(DF,'CH4.gas'=c('X',rep(NA,6)))#}
-    assign(microbeNames[1],DF,envir = .GlobalEnv)
+    #Done already and add to /data/SugarUsers.Rdata
+    #DF1= get(microbeNames[1])
+    #DF=cbind(DF1,'NDF'=c('X',rep(NA,6)),'NSC'=c('X',rep(NA,6)),'Protein'=c('X',rep(NA,6)))
+    #DF=cbind(DF,'H2.gas'=c('X',rep(NA,6)))
+    #DF=cbind(DF,'CO2.gas'=c('X',rep(NA,6)))#}
+    #DF=cbind(DF,'CH4.gas'=c('X',rep(NA,6)))#}
+    #assign(microbeNames[1],DF,envir = .GlobalEnv)
     
 
     #interpolate feed data to times.h and add spin up time
@@ -144,19 +147,19 @@ rumenModel=function(
 
     if (init.with.CH4.data & !is.null(gasMat)){
     #set initial value of CH4.gas based on mean of data
-        sys.res['startValue','CH4.gas'] = mean(gasMat[,'CH4(mol/h)'])/sys.res['washOut','CH4.gas']
+        resourceSysInfo['startValue','CH4.gas'] = mean(gasMat[,'CH4(mol/h)'])/resourceSysInfo['washOut','CH4.gas']
     }else{
-        sys.res['startValue','CH4.gas']= 0
+        resourceSysInfo['startValue','CH4.gas']= 0
     }
 
     
    print('starting microPopModel()')
     
-    out=microPopModel(
+    out= microPop::microPopModel(
         microbeNames=microbeNames,
         times=times.h,
-        resourceSysInfo=sys.res,
-        microbeSysInfo=sys.bac,
+        resourceSysInfo=resourceSysInfo,
+        microbeSysInfo=microbeSysInfo,
         pHLimit=FALSE,
         rateFuncs=rumenRateFuncs,
         #odeFunc=derivsDefault,

@@ -6,7 +6,8 @@
 #' 
 #' @param basal.diet either 'Mixed' or 'Concentrate'
 #' @param treatment either 'Control','Nitrate' or 'Rapeseed-cake'
-#' @return named vector containg fractions: ['NDF','NSC','Protein']
+#' @param dietCompositionMat matrix describing diet composition (intrinsic DF)
+#' @return named vector containg fractions: c(NDF,NSC,Protein)
 #' @export
 #' 
 getPolymerFrac=function(basal.diet,treatment,dietCompositionMat){

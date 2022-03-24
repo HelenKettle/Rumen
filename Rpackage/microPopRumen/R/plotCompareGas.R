@@ -1,9 +1,15 @@
+#' plotCompareGas
+#'
+#' plots modelled methane production rate against measured data
+#'
+#' @param out Output from rumenModel()
+#' @param spinUpTime.hours time period to run model before using feed data
+#' @param gasMat gas measurements data set (time (h), 'MPRmPh' (methane production rate in moles per hour))
+#' 
+
 plotCompareGas=function(out,spinUpTime.hours,gasMat=NULL){
 
-    #TSmat with 'Time'(hours),'DMIR' (dry matter intake rate in kg/d),'MPRmPh' (methane production rate in moles per hour))
 
-    #gas data is in myPars[['TSmat']]
-    
     model.time=out$solution[,'time']-min(out$solution[,'time'])
     methane=out$solution[,'CH4.gas']
     MPR=methane*out$parms$Smats$washOut['CH4.gas']
@@ -16,15 +22,15 @@ plotCompareGas=function(out,spinUpTime.hours,gasMat=NULL){
     }
 
     
-    dev.new()
-    plot(range(model.time),range(mpr),type='n',xlab='Time (h)',ylab='MPR (moles/h)')
-    lines(model.time,MPR,col='black')
+    grDevices::dev.new()
+    graphics::plot(range(model.time),range(mpr),type='n',xlab='Time (h)',ylab='MPR (moles/h)')
+    graphics::lines(model.time,MPR,col='black')
     if (!is.null(gasMat)){
-        lines(gasTime,gasMat[,2],col='red')
+        graphics::lines(gasTime,gasMat[,2],col='red')
     }
-    abline(v=spinUpTime.hours,lty=2,col='blue')
+    graphics::abline(v=spinUpTime.hours,lty=2,col='blue')
 
-    legend('topleft',c('model','data'),col=c('black','red'),lty=c(1,1),bty='n')
+    graphics::legend('topleft',c('model','data'),col=c('black','red'),lty=c(1,1),bty='n')
 
-    text(spinUpTime.hours+0.01*diff(range(model.time)),min(mpr),'end of spin-up',adj=c(0,0),col='blue')
+    graphics::text(spinUpTime.hours+0.01*diff(range(model.time)),min(mpr),'end of spin-up',adj=c(0,0),col='blue')
 }

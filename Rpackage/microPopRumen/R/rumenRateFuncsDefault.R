@@ -8,8 +8,7 @@
 #' note that in these functions, the parms list is intrinsic to microPop whereas the myPars list is defined by the inputs to microPopGut() and then added to parms
 #' 
 #'
-#' @include entryRateFuncMPG.R
-#' @include removalRateFuncMPG.R
+#' @include FuncsForMicroPop.R
 #'
 #' @export
 #' 

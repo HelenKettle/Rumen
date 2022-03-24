@@ -1,11 +1,11 @@
 Package: microPopRumen
-Title: An ODE Model For Simulating Methane Data From Respiration Chambers 
+Title: An ODE Model For Simulating Methane Production From Cows in Respiration Chambers 
 Version: 1.0
 Authors@R: 
     person("Helen", "Kettle", , "Helen.Kettle@Bioss.ac.uk", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6960-9733"))
-Description: What the package does (one paragraph).
-License: use_gpl3_license()
+Description: This package simulates methane production rate as measured in respiration chambers from cows. It is driven by feed data which is a time series recording the weight of food left for the cow.
+License: GPL-3 | file LICENSE
 LazyData: true
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -20,3 +20,14 @@ Suggests:
     rmarkdown,
     knitr,
     R.rsp
+Collate: 
+    'FuncsForMicroPop.R'
+    'bioChemFuncs.R'
+    'calc.stoichiom.yields.R'
+    'data.R'
+    'getPolymerFrac.R'
+    'plotCompareGas.R'
+    'quickPlot.R'
+    'replaceListItems.R'
+    'rumenModel.R'
+    'rumenRateFuncsDefault.R'

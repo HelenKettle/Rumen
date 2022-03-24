@@ -2,11 +2,21 @@ Package: microPopRumen
 Title: An ODE Model For Simulating Methane Data From Respiration Chambers 
 Version: 1.0
 Authors@R: 
-    person("Helen", "Kettle", , "Helen.Kettle@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Helen", "Kettle", , "Helen.Kettle@Bioss.ac.uk", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-6960-9733"))
 Description: What the package does (one paragraph).
 License: use_gpl3_license()
 LazyData: true
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
+Depends:
+    microPop (>= 1.6),
+    stats,
+    grDevices,
+    graphics
+Suggests: 
+    testthat,
+    rmarkdown,
+    knitr,
+    R.rsp

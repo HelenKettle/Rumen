@@ -1,22 +1,42 @@
-modelFunc=function(
+#' rumenModel
+#'
+#' this function calls microPopModel() to simulate the growth of microbes in the rumen. It returns a list with the numerical solution (solution) plus parameters used by microPop (parms) plus parameters specified for the rumen (myPars)
+#'
+#' @param times.h vector of model simulation times in hours
+#' @param spinUpTime.hours time period (h) before the model uses the feed data (default is 0)
+#' @param additive treatment or additive e.g. 'Control' (default) or 'Nitrate'
+#' @param basal.date basal diet - e.g. 'Mixed' (default) or 'Concentrate'
+#' @param feedMat matrix with time (h) in column 1 and dry matter intake rate (kg/h) in column 2
+#' @param gasMat matrix with time (h) in column 1 and methane production rate (mol/h) in column two
+#' @param dietCompositionMat matrix describing the composition of different diets (intrinsic data frame)
+#' @param microbeNames vector containing the names of the microbial data frames
+#' @param resourceSysInfo data frame describing resource inflow/outflow/startvalue etc
+#' @param microbeSysInfo data frame describing microbial inflow/outlfow/startvalues etc
+#' @param useNetworkFuncs TRUE/FALSE for plotting microbial network flows
+#' @param init.with.CH4.data change to TRUE to use the gasMat data to set the first MPR model value
+#' @param paramList intrinsic data frame containing parameter values
+#'
+#' @return returns a list with the numerical solution (solution) plus parameters used by microPop (parms) plus parameters specified for the rumen (myPars). If useNetworkFuncs is TRUE then flow.uptake and flow.production are added to this list
+#'
+#' @export
+rumenModel=function(
     times.h,
-    microbeNames,
-    resourceSysInfo,
-    microbeSysInfo,
-    rateFuncs=rateFuncsDefault,
+    spinUpTime.hours=1,
     additive='Control',
     basal.diet='Mixed',
-    dataFolder=NULL,
-    spinUpTime.hours=0,
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
     useNetworkFuncs=FALSE,
-    feedMat=NULL,
-    gasMat=NULL,
     init.with.CH4.data=FALSE,
-    dietCompositionMat=NULL,
+
     paramList=list(
 
+        khyd.scale=8, #scaling factor for khyd.vec to change rate of hydrolysis
         khyd.vec =  c('NDF'=0.05,'NSC'=0.20,'Protein'=0.22), #/h hydrolysis of polymers
-#khyd.orig  =  c('NDF'=1.0,'NSC'=1.0,'Protein'=1.0) #/h #NOTE after GSA have changed khyd.NSC to 0.1
         kLa  = 8.33, ##Liquid-gas transfer coef (/h)(Batstone 200 /d = 8.33 /h) #1.07 
         vfa.absorption = c('Acetate'=0.33,'Propionate'=0.51,'Butyrate'=0.46), #/h VFA absorption through rumen wall from dijkstra et al 1993
         kd  =  8.3333e-4, #death rate of microbes
@@ -28,13 +48,11 @@ modelFunc=function(
         Vol.g = 40,  # Volume in the gas phase, L (Berends - no ref)
         Ptot  =  1.01325, # System pressure, bar. (approx same at atm)
         T.rumen  =  39+273.15 ,	# Temperature, K
-                                        # Henrys constant  M/bar, at T = 25C (298.15K)
-        KH.co2.s  = 0.035,
+        KH.co2.s  = 0.035,# Henrys constant  M/bar, at T = 25C (298.15K)
         KH.ch4.s  =  0.0014,
         KH.h2.s  =  7.8e-4,
         R  =  8.314*1e-2,   # bar*L/(mol*K)
-    # Equilibrium constants 
-        deltaH0.Ka.w  =  55900,
+        deltaH0.Ka.w  =  55900,# Equilibrium constants 
         deltaH0.Ka.co2  =  7646,
         deltaH0.Ka.nh4  =  51965
     )
@@ -42,7 +60,32 @@ modelFunc=function(
 
 ){
 
-   # returns list containing 'solution' (matrix from ODE solver), parms (microPop parameters),myPars (rumen parameters)))
+    
+    paramList.default=list(
+        khyd.scale=8,
+        khyd.vec =  c('NDF'=0.05,'NSC'=0.20,'Protein'=0.22), 
+        kLa  = 8.33, 
+        vfa.absorption = c('Acetate'=0.33,'Propionate'=0.51,'Butyrate'=0.46),
+        kd  =  8.3333e-4,
+        fch.x  = 0.20, 
+        fpro.x  = 0.55,
+        Z0 =  0.14, 
+        Vol.l = 100, 
+        Vol.g = 40,  
+        Ptot  =  1.01325, 
+        T.rumen  =  39+273.15 ,
+        KH.co2.s  = 0.035,
+        KH.ch4.s  =  0.0014,
+        KH.h2.s  =  7.8e-4,
+        R  =  8.314*1e-2,   # bar*L/(mol*K)
+        deltaH0.Ka.w  =  55900,
+        deltaH0.Ka.co2  =  7646,
+        deltaH0.Ka.nh4  =  51965
+    )
+
+    paramList = replaceListItems(paramList, paramList.default)
+
+    paramList[['khyd']]=as.numeric(paramList['khyd.scale'])*paramList[['khyd.vec']]
 
     myPars=paramList
 
@@ -51,7 +94,7 @@ modelFunc=function(
     myPars[['gas.names']]=c('H2'='H2.gas','SIC'='CO2.gas','CH4'='CH4.gas')
 
     myPars[['f.X']] = c('NSC'=paramList$fch.x,'Protein'=paramList$fpro.x)
-    
+
     #convert to rumen temperature
     KH.co2  =  paramList$KH.co2.s*exp(-(19410/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
     KH.ch4  =  paramList$KH.ch4.s*exp(-(14240/(paramList$R*100))*(1/298.15-1/paramList$T.rumen))
@@ -74,9 +117,7 @@ modelFunc=function(
     }else{
         stop('please provide dietCompositionMat for calculating polymer ratios')
     }
-        
-    
-#    timeIntHours=10/60 #1 minute
+
 
     #add in variables that aren't microbial resources
     DF1= get(microbeNames[1])
@@ -87,15 +128,13 @@ modelFunc=function(
     assign(microbeNames[1],DF,envir = .GlobalEnv)
     
 
-
     #interpolate feed data to times.h and add spin up time
     if (!is.null(feedMat)){
-        print('here')
         myPars$useFeedData=TRUE
         tstep=mean(diff(feedMat[,1]))
         spin.up.start=times.h[1]-spinUpTime.hours
         new.times.h=seq(spin.up.start,max(times.h),by=tstep)
-        DMIR.new=approx(feedMat[,1],feedMat[,2],new.times.h,rule=2)$y
+        DMIR.new=stats::approx(feedMat[,1],feedMat[,2],new.times.h,rule=2)$y
         TSmat=cbind('Time'=new.times.h-min(new.times.h),'DMIR'=DMIR.new)
         myPars[['TSmat']]=TSmat
     }else{
@@ -119,7 +158,7 @@ modelFunc=function(
         resourceSysInfo=sys.res,
         microbeSysInfo=sys.bac,
         pHLimit=FALSE,
-        rateFuncs=myRateFuncs,
+        rateFuncs=rumenRateFuncs,
         #odeFunc=derivsDefault,
         checkingOptions=list(balanceTol=1e-2,reBalanceStoichiom=FALSE,checkMassConv=FALSE,checkStoichiomBalance=TRUE,stoiTol=1),
         plotOptions=list(plotFig=FALSE),
@@ -132,8 +171,6 @@ modelFunc=function(
     )
 
     print('after')
-
-    print(names(out))
 
     if (useNetworkFuncs){
         return.list=list(solution=out$solution,

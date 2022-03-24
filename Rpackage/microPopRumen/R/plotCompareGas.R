@@ -24,6 +24,7 @@ plotCompareGas=function(out,spinUpTime.hours,gasMat=NULL){
     }
     abline(v=spinUpTime.hours,lty=2,col='blue')
 
-    legend('topleft',c('model','data','end of spin up'),col=c('black','red','blue'),lty=c(1,1,2),bty='n')
-    
+    legend('topleft',c('model','data'),col=c('black','red'),lty=c(1,1),bty='n')
+
+    text(spinUpTime.hours+0.01*diff(range(model.time)),min(mpr),'end of spin-up',adj=c(0,0),col='blue')
 }

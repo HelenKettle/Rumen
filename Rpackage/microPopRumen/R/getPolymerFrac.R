@@ -14,8 +14,6 @@ getPolymerFrac=function(basal.diet,treatment,dietCompositionMat){
 
     comp.mat=dietCompositionMat
 
-    print(comp.mat)
-    
     composition=comp.mat[comp.mat[,'Additive']==treatment & comp.mat[,'Diet']==basal.diet,]
     
     if (!exists('composition')){stop('composition is not defined for this diet/treatment')}

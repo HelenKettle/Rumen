@@ -1,4 +1,4 @@
-removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
+removalRateFuncRumen=function(varName,varValue,stateVarValues,time,washOut,parms){
   #removal rate from rumen
 
 #print('removal rate')
@@ -13,8 +13,8 @@ removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
       hydrolysis=parms$myPars$khyd[varName]
   }#hydrolysis of polymers
 
-  gname=getGroupName(varName,microbeNames)
-  if (gname%in%microbeNames){death=parms$myPars$kd}#death of microbes
+  gname=getGroupName(varName,parms$microbeNames)
+  if (gname%in%parms$microbeNames){death=parms$myPars$kd}#death of microbes
 
 
   #compute gas transfer from liquid to headspace for SIC, H2 and CH4
@@ -55,7 +55,7 @@ removalRateFunc=function(varName,varValue,stateVarValues,time,washOut,parms){
 }
 
 
-entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
+entryRateFuncRumen=function(varName,varValue,stateVarValues,time,inflowRate,parms){
 
 
   #resource (or microbial strain mass) per unit time
@@ -74,7 +74,7 @@ entryRateFunc=function(varName,varValue,stateVarValues,time,inflowRate,parms){
         if (varName%in%parms$myPars$polymer.names){
             if (parms$myPars$useFeedData){
                 v.in=parms$myPars$polymer.frac.gPkg[varName]*
-                    approx(parms$myPars[['TSmat']][,'Time'],parms$myPars[['TSmat']][,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
+                    stats::approx(parms$myPars[['TSmat']][,'Time'],parms$myPars[['TSmat']][,'DMIR'],time,rule=2,ties=mean)$y/parms$myPars$Vol.l #g/l/h
 
             }else{
                 v.in=inflowRate[varName]

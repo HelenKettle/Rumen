@@ -1,8 +1,0 @@
-,units,AminoAcid,Biomass,Acetate,Butyrate,Propionate,H2,SIC,NH3,H2O
-Rtype,none,Se,Pb,P,P,P,P,P,P,P
-halfSat,g/l,0.8576,NA,NA,NA,NA,NA,NA,NA,NA
-yield,g/g,0.2614,NA,NA,NA,NA,NA,NA,NA,NA
-maxGrowthRate,/h,2.08,NA,NA,NA,NA,NA,NA,NA,NA
-stoichiom,moles,1,0.31,0.462,0.1656,0.04278,0.5658,0.6072,1.19,0.3015004
-keyResource,none,AminoAcid,,,,,,,,
-pHcorners,none,0,0,10,10,,,,,

@@ -35,8 +35,10 @@ out=rumenModel(
  
 
 quickPlot(out)
+dev.copy2pdf(file='microPopRumen/vignettes/demo5a.pdf')
 
 plotCompareGas(out,spinUpTime.hours,gasMat)
+dev.copy2pdf(file='microPopRumen/vignettes/demo5b.pdf')
 
 
     

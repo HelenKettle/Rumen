@@ -1,0 +1,195 @@
+---
+title: "microPopRumen"
+author: "Helen Kettle"
+date: "29/03/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Getting started with microPopRumen
+
+This software uses the microPop R package and is used to simulate methane production in cows. It takes feed data i.e. dry matter intake rate (DMIR) in kg/h, converts it to it's polymer and protein composition and then this is used as substrate to 3 microbial functional groups. These are sugar users, amino acid users and methanogens (data frames describing these are included in the package). The output from the model is compared with gas data from respiration chambers (i.e. methane production in moles/h).
+
+The mathematical model used in this software is similar to that described here:
+
+<https://www.sciencedirect.com/science/article/abs/pii/S0377840116303388>
+
+R. Muñoz-Tamayo, S. Giger-Reverdin, and D. Sauvant. 2016. Mechanistic modelling of in vitro fermentation and methane production by rumen micrbiota. Anim. Feed Sci. Technol 220:1-21.
+
+
+
+This vignette shows some examples of how this package can be used.
+
+## 1. Run model at default settings
+
+```{r eval=FALSE}
+times.h=seq(0,24,by=1/60)
+
+spinUp=1
+
+#RATE FUNCS
+out=rumenModel(
+    times.h,
+    spinUpTime.hours=spinUp,
+    additive='Control',
+    basal.diet='Mixed',
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
+    useNetworkFuncs=FALSE,
+    init.with.CH4.data=FALSE
+)
+ 
+quickPlot(out)
+```
+
+![Results of quickplot() after runing model with default settings](demo1a.pdf){width=500px}
+
+
+```{r eval=FALSE}
+plotCompareGas(out,spinUp,gasMat)
+```
+
+![Results of plotCompareGas() after running model with default settings](demo1b.pdf){width=250px}
+
+## 2. Change rate of hydrolysis of polymers
+
+```{r eval=FALSE}
+times.h=seq(0,24,by=1/60)
+
+spinUpTime.hours=2
+
+out=rumenModel(
+    times.h,
+    spinUpTime.hours=spinUpTime.hours,
+    additive='Control',
+    basal.diet='Mixed',
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
+    useNetworkFuncs=FALSE,
+    init.with.CH4.data=FALSE,
+    paramList=list('khyd.scale'=16)#change value of scale on hydrolysis vector
+)
+ 
+
+quickPlot(out)
+```
+![Results of plotCompareGas() after running model with increased hydrolysis rate](demo2b.pdf){width=250px}
+
+## 3. Change start values of microbes
+
+```{r eval=FALSE}
+times.h=seq(0,24,by=1/60)
+
+spinUpTime.hours=2
+
+#change initial conditions-------------------------------------
+#microbes
+sys.bac['startValue',c('SugarUsers','AAUsers','MethanogensH2')]=c(10,5,1)
+
+
+out=rumenModel(
+    times.h,
+    spinUpTime.hours=spinUpTime.hours,
+    additive='Control',
+    basal.diet='Mixed',
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
+    useNetworkFuncs=FALSE,
+    init.with.CH4.data=FALSE
+)
+ 
+
+quickPlot(out)
+```
+![Results of quickPlot() after running model with different starting values for microbes](demo3a.pdf){width=500px}
+
+## 4. Change yield of sugar users. This will change the stoichiometries so these are recalculated using calc.stoichiom.yields()
+
+```{r eval=FALSE}
+times.h=seq(0,24,by=1/60)
+
+spinUpTime.hours=2
+
+yield.Sug=0.2
+
+#change yield of sugarusers
+SugarUsers['yield','Sugar']=yield.Sug
+new.stoichioms=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$stoi
+SugarUsers['Rtype','H2O']=calc.stoichiom.yields(as.numeric(SugarUsers['yield','Sugar']),'Sugar')$waterStatus
+p.names=c('Sugar','Acetate','Butyrate','Propionate','H2','NH3','SIC','H2O','Biomass')
+for (pn in p.names){
+    SugarUsers['stoichiom',pn]=as.numeric(new.stoichioms[pn])
+}
+
+
+out=rumenModel(
+    times.h,
+    spinUpTime.hours=spinUpTime.hours,
+    additive='Control',
+    basal.diet='Mixed',
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
+    useNetworkFuncs=FALSE,
+    init.with.CH4.data=FALSE
+)
+ 
+
+quickPlot(out)
+```
+![Results of plotCompareGas() after running model with different yield for sugar users](demo4b.pdf){width=250px}
+
+## 5. Change transit time
+Change the time it takes to travel through the rumen
+
+```{r eval=FALSE}
+times.h=seq(0,24,by=1/60)
+
+spinUpTime.hours=2
+
+transitTime.h=12
+
+sys.res['washOut',]=1/transitTime.h
+sys.bac['washOut',]=1/transitTime.h
+
+
+out=rumenModel(
+    times.h,
+    spinUpTime.hours=spinUpTime.hours,
+    additive='Control',
+    basal.diet='Mixed',
+    dietCompositionMat=dietCompositionMat,
+    feedMat=feedMat,
+    gasMat=gasMat,
+    resourceSysInfo=sys.res,
+    microbeSysInfo=sys.bac,
+    microbeNames=c('SugarUsers','AAUsers','MethanogensH2'),
+    useNetworkFuncs=FALSE,
+    init.with.CH4.data=FALSE
+)
+ 
+
+quickPlot(out)
+```
+
+![Results of plotCompareGas() after running model with different transit time](demo5b.pdf){width=250px}
+
